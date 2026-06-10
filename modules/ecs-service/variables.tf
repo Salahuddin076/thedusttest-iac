@@ -99,6 +99,30 @@ variable "secret_arn" {
   type        = string
 }
 
+variable "use_step_scaling" {
+  description = "Use step scaling (CloudWatch alarms) instead of target tracking"
+  type        = bool
+  default     = false
+}
+
+variable "scale_cpu_threshold" {
+  description = "CPU utilisation % that triggers scale-out (step scaling only)"
+  type        = number
+  default     = 80
+}
+
+variable "scale_memory_threshold" {
+  description = "Memory utilisation % that triggers scale-out (step scaling only)"
+  type        = number
+  default     = 80
+}
+
+variable "scale_evaluation_periods" {
+  description = "Consecutive 60-second periods above threshold before scaling out (step scaling only)"
+  type        = number
+  default     = 1
+}
+
 variable "tags" {
   description = "Common tags"
   type        = map(string)

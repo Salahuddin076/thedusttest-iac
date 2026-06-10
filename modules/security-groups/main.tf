@@ -1,10 +1,11 @@
 locals {
   name_prefix = "${var.environment}-${var.project}"
+  alb_sg_name = var.alb_sg_name != "" ? var.alb_sg_name : "${var.project}-alb-sg"
 }
 
 # ALB Security Group — allows inbound HTTP/HTTPS from the internet
 resource "aws_security_group" "alb" {
-  name        = "${var.project}-alb-sg"
+  name        = local.alb_sg_name
   description = "Allow HTTP/HTTPS inbound to ALB"
   vpc_id      = var.vpc_id
 
@@ -32,7 +33,7 @@ resource "aws_security_group" "alb" {
   }
 
   tags = merge(var.tags, {
-    Name = "${var.project}-alb-sg"
+    Name = local.alb_sg_name
   })
 }
 

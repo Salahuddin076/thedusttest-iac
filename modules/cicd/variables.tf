@@ -74,6 +74,12 @@ variable "secret_name" {
   type        = string
 }
 
+variable "auto_trigger" {
+  description = "Whether to auto-trigger the pipeline on branch push. Set false for manual-only deployments."
+  type        = bool
+  default     = true
+}
+
 variable "tags" {
   description = "Common tags"
   type        = map(string)

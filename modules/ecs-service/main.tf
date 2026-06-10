@@ -199,7 +199,10 @@ resource "aws_appautoscaling_target" "ecs" {
   service_namespace  = "ecs"
 }
 
+# ── Target Tracking (dev / default) ──────────────────────────────────────────
+
 resource "aws_appautoscaling_policy" "cpu" {
+  count              = var.use_step_scaling ? 0 : 1
   name               = "${var.service_name}-cpu-scaling"
   policy_type        = "TargetTrackingScaling"
   resource_id        = aws_appautoscaling_target.ecs.resource_id
@@ -217,6 +220,7 @@ resource "aws_appautoscaling_policy" "cpu" {
 }
 
 resource "aws_appautoscaling_policy" "memory" {
+  count              = var.use_step_scaling ? 0 : 1
   name               = "${var.service_name}-memory-scaling"
   policy_type        = "TargetTrackingScaling"
   resource_id        = aws_appautoscaling_target.ecs.resource_id
@@ -231,4 +235,133 @@ resource "aws_appautoscaling_policy" "memory" {
     scale_in_cooldown  = 300
     scale_out_cooldown = 60
   }
+}
+
+# ── Step Scaling (prod / HA) ───────────────────────────────────────────────────
+# CloudWatch alarms fire after `scale_evaluation_periods` × 60 s above threshold.
+# alarm_actions  → scale-out  (add 1 task, 60 s cooldown)
+# ok_actions     → scale-in   (remove 1 task, 300 s cooldown — prevents thrashing)
+
+resource "aws_appautoscaling_policy" "cpu_scale_out" {
+  count              = var.use_step_scaling ? 1 : 0
+  name               = "${var.service_name}-cpu-scale-out"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs.service_namespace
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = 60
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_lower_bound = 0
+      scaling_adjustment          = 1
+    }
+  }
+}
+
+resource "aws_appautoscaling_policy" "cpu_scale_in" {
+  count              = var.use_step_scaling ? 1 : 0
+  name               = "${var.service_name}-cpu-scale-in"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs.service_namespace
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = 300
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_upper_bound = 0
+      scaling_adjustment          = -1
+    }
+  }
+}
+
+resource "aws_appautoscaling_policy" "memory_scale_out" {
+  count              = var.use_step_scaling ? 1 : 0
+  name               = "${var.service_name}-memory-scale-out"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs.service_namespace
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = 60
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_lower_bound = 0
+      scaling_adjustment          = 1
+    }
+  }
+}
+
+resource "aws_appautoscaling_policy" "memory_scale_in" {
+  count              = var.use_step_scaling ? 1 : 0
+  name               = "${var.service_name}-memory-scale-in"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs.service_namespace
+
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+    cooldown                = 300
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_upper_bound = 0
+      scaling_adjustment          = -1
+    }
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "cpu_high" {
+  count               = var.use_step_scaling ? 1 : 0
+  alarm_name          = "${var.service_name}-cpu-high"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = var.scale_evaluation_periods
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/ECS"
+  period              = 60
+  statistic           = "Average"
+  threshold           = var.scale_cpu_threshold
+
+  dimensions = {
+    ClusterName = var.ecs_cluster_name
+    ServiceName = aws_ecs_service.main.name
+  }
+
+  alarm_actions = [aws_appautoscaling_policy.cpu_scale_out[0].arn]
+  ok_actions    = [aws_appautoscaling_policy.cpu_scale_in[0].arn]
+
+  tags = var.tags
+}
+
+resource "aws_cloudwatch_metric_alarm" "memory_high" {
+  count               = var.use_step_scaling ? 1 : 0
+  alarm_name          = "${var.service_name}-memory-high"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = var.scale_evaluation_periods
+  metric_name         = "MemoryUtilization"
+  namespace           = "AWS/ECS"
+  period              = 60
+  statistic           = "Average"
+  threshold           = var.scale_memory_threshold
+
+  dimensions = {
+    ClusterName = var.ecs_cluster_name
+    ServiceName = aws_ecs_service.main.name
+  }
+
+  alarm_actions = [aws_appautoscaling_policy.memory_scale_out[0].arn]
+  ok_actions    = [aws_appautoscaling_policy.memory_scale_in[0].arn]
+
+  tags = var.tags
 }

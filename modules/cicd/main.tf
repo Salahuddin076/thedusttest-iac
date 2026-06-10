@@ -308,7 +308,7 @@ resource "aws_codepipeline" "main" {
         FullRepositoryId     = var.github_repo
         BranchName           = var.github_branch
         OutputArtifactFormat = "CODE_ZIP"
-        DetectChanges        = "true"
+        DetectChanges        = tostring(var.auto_trigger)
       }
     }
   }

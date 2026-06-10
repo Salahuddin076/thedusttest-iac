@@ -24,6 +24,12 @@ variable "ecs_sg_name" {
   type        = string
 }
 
+variable "alb_sg_name" {
+  description = "ALB security group name (defaults to <project>-alb-sg when empty)"
+  type        = string
+  default     = ""
+}
+
 variable "tags" {
   description = "Common tags"
   type        = map(string)
