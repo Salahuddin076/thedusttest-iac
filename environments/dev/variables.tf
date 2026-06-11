@@ -73,6 +73,12 @@ variable "ecs_sg_name" {
   default     = "tdt-partner-api-sg"
 }
 
+variable "alb_sg_name" {
+  description = "ALB security group name — defaults to <project>-alb-sg when empty"
+  type        = string
+  default     = ""
+}
+
 variable "container_port" {
   description = "Container port"
   type        = number

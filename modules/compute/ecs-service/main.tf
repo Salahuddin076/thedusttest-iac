@@ -114,10 +114,6 @@ resource "aws_ecs_task_definition" "main" {
         {
           name      = "APP_SECRETS"
           valueFrom = var.secret_arn
-        },
-        {
-          name      = "DATABASE_URL"
-          valueFrom = "${var.secret_arn}:DATABASE_URL::"
         }
       ]
 
@@ -136,7 +132,6 @@ resource "aws_ecs_task_definition" "main" {
     Name = var.service_name
   })
 
-  # CI/CD pipeline updates the container image — don't let Terraform revert it
   lifecycle {
     ignore_changes = [container_definitions]
   }

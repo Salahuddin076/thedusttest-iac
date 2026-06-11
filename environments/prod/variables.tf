@@ -149,6 +149,12 @@ variable "scale_evaluation_periods" {
 }
 
 # ── CI/CD ─────────────────────────────────────────────────────────────────────
+variable "auto_trigger" {
+  description = "Whether the pipeline auto-triggers on branch push"
+  type        = bool
+  default     = false
+}
+
 variable "codestar_connection_arn" {
   description = "AWS CodeConnections ARN for GitHub"
   type        = string
@@ -165,4 +171,11 @@ variable "github_branch" {
   description = "GitHub branch to track"
   type        = string
   default     = "main"
+}
+
+# ── RDS ───────────────────────────────────────────────────────────────────────
+variable "nat_gateway_eip" {
+  description = "NAT Gateway Elastic IP — used to allow cross-VPC MySQL access from ECS tasks"
+  type        = string
+  default     = "3.18.208.242"
 }

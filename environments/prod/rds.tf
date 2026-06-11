@@ -29,20 +29,20 @@ resource "aws_db_instance" "prod" {
 # The RDS is in a different VPC so its SG sees the NAT GW public IP, not 13.x.x.x.
 resource "aws_security_group_rule" "rds_from_ecs_vpc" {
   type              = "ingress"
-  security_group_id = "sg-05487522410ce7e59"
-  description       = "MySQL from ECS tasks (13.0.0.0/16)"
+  security_group_id = tolist(aws_db_instance.prod.vpc_security_group_ids)[0]
+  description       = "MySQL from ECS tasks (shared VPC CIDR)"
   protocol          = "tcp"
   from_port         = 3306
   to_port           = 3306
-  cidr_blocks       = ["13.0.0.0/16"]
+  cidr_blocks       = [data.aws_vpc.shared.cidr_block]
 }
 
 resource "aws_security_group_rule" "rds_from_nat_gw" {
   type              = "ingress"
-  security_group_id = "sg-05487522410ce7e59"
+  security_group_id = tolist(aws_db_instance.prod.vpc_security_group_ids)[0]
   description       = "MySQL from ECS NAT Gateway EIP - actual source IP for cross-VPC traffic"
   protocol          = "tcp"
   from_port         = 3306
   to_port           = 3306
-  cidr_blocks       = ["3.18.208.242/32"]
+  cidr_blocks       = ["${var.nat_gateway_eip}/32"]
 }

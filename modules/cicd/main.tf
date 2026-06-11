@@ -178,7 +178,9 @@ resource "aws_codebuild_project" "main" {
             - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
             - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
             - echo Fetching .env from Secrets Manager...
-            - aws secretsmanager get-secret-value --secret-id $ENV_SECRET_NAME --query SecretString --output text | jq -r 'to_entries[] | "\(.key)=\(.value)"' > .env
+            - aws secretsmanager get-secret-value --secret-id $ENV_SECRET_NAME --query SecretString --output text > .env
+            - echo "ENV=prod" >> .env
+            - echo "=== .env contents (debug) ===" && cat .env && echo "=== end ==="
         build:
           commands:
             - echo Building Docker image...
