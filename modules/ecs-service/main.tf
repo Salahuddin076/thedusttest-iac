@@ -114,6 +114,10 @@ resource "aws_ecs_task_definition" "main" {
         {
           name      = "APP_SECRETS"
           valueFrom = var.secret_arn
+        },
+        {
+          name      = "DATABASE_URL"
+          valueFrom = "${var.secret_arn}:DATABASE_URL::"
         }
       ]
 
