@@ -66,7 +66,7 @@ resource "aws_route" "rds_to_ecs" {
   vpc_peering_connection_id = aws_vpc_peering_connection.ecs_to_rds.id
 }
 
-# ── RDS Security Group — allow MySQL from ECS VPC ────────────────────────────
+# ── RDS Security Group — allow MySQL from ECS VPC CIDR (peering) ─────────────
 resource "aws_security_group_rule" "rds_from_ecs_vpc" {
   type              = "ingress"
   security_group_id = "sg-05487522410ce7e59" # prod-rds-thedustest SG
@@ -75,4 +75,17 @@ resource "aws_security_group_rule" "rds_from_ecs_vpc" {
   from_port         = 3306
   to_port           = 3306
   cidr_blocks       = [data.aws_vpc.shared.cidr_block]
+}
+
+# ── RDS Security Group — allow MySQL from ECS NAT Gateway public IP ───────────
+# ECS tasks in private subnets egress via the NAT GW (fixed EIP 3.18.208.242).
+# This rule is the direct path: ECS → NAT GW → RDS public endpoint.
+resource "aws_security_group_rule" "rds_from_ecs_nat" {
+  type              = "ingress"
+  security_group_id = "sg-05487522410ce7e59"
+  description       = "MySQL from ECS NAT Gateway EIP (3.18.208.242)"
+  protocol          = "tcp"
+  from_port         = 3306
+  to_port           = 3306
+  cidr_blocks       = ["3.18.208.242/32"]
 }
