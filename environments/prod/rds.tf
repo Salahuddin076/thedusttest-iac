@@ -24,7 +24,9 @@ resource "aws_db_instance" "prod" {
   }
 }
 
-# ── RDS Security Group — allow MySQL from ECS VPC ────────────────────────────
+# ── RDS Security Group ────────────────────────────────────────────────────────
+# ECS tasks are in private subnets and egress via NAT Gateway (fixed EIP).
+# The RDS is in a different VPC so its SG sees the NAT GW public IP, not 13.x.x.x.
 resource "aws_security_group_rule" "rds_from_ecs_vpc" {
   type              = "ingress"
   security_group_id = "sg-05487522410ce7e59"
@@ -33,4 +35,14 @@ resource "aws_security_group_rule" "rds_from_ecs_vpc" {
   from_port         = 3306
   to_port           = 3306
   cidr_blocks       = ["13.0.0.0/16"]
+}
+
+resource "aws_security_group_rule" "rds_from_nat_gw" {
+  type              = "ingress"
+  security_group_id = "sg-05487522410ce7e59"
+  description       = "MySQL from ECS NAT Gateway EIP - actual source IP for cross-VPC traffic"
+  protocol          = "tcp"
+  from_port         = 3306
+  to_port           = 3306
+  cidr_blocks       = ["3.18.208.242/32"]
 }
