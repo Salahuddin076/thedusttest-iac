@@ -35,6 +35,16 @@ resource "aws_vpc_peering_connection" "ecs_to_rds" {
   peer_vpc_id = data.aws_vpc.rds.id
   auto_accept = true
 
+  # Without these, the RDS hostname resolves to its public IP from the ECS VPC
+  # and the connection is blocked. These make it resolve to the private IP.
+  requester {
+    allow_remote_vpc_dns_resolution = true
+  }
+
+  accepter {
+    allow_remote_vpc_dns_resolution = true
+  }
+
   tags = merge(local.common_tags, {
     Name = "${var.project}-ecs-to-rds-peering"
   })
