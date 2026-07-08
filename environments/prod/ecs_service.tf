@@ -21,6 +21,8 @@ module "ecs_service" {
   alb_https_listener_arn = module.alb.https_listener_arn
   secret_arn             = module.secrets.secret_arn
 
+  fargate_on_demand_base = 1
+
   use_step_scaling         = true
   scale_cpu_threshold      = var.scale_cpu_threshold
   scale_memory_threshold   = var.scale_memory_threshold

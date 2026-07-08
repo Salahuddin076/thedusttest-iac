@@ -20,5 +20,6 @@ module "ecs_service" {
   target_group_arn       = module.alb.target_group_arn
   alb_https_listener_arn = module.alb.https_listener_arn
   secret_arn             = module.secrets.secret_arn
+  fargate_on_demand_base = 0
   tags                   = local.common_tags
 }

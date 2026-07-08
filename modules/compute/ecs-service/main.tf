@@ -137,17 +137,18 @@ resource "aws_ecs_service" "main" {
   task_definition = aws_ecs_task_definition.main.arn
   desired_count   = var.desired_count
 
-  # First task always on Spot; fall back to on-demand if Spot is unavailable
+  # Spot is primary (weight 3:1 over on-demand). On-demand base ensures
+  # `fargate_on_demand_base` tasks always survive a Spot interruption.
   capacity_provider_strategy {
     capacity_provider = "FARGATE_SPOT"
-    weight            = 1
-    base              = 1
+    weight            = 3
+    base              = 0
   }
 
   capacity_provider_strategy {
     capacity_provider = "FARGATE"
-    weight            = 0
-    base              = 0
+    weight            = 1
+    base              = var.fargate_on_demand_base
   }
 
   network_configuration {

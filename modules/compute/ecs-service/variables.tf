@@ -99,6 +99,12 @@ variable "secret_arn" {
   type        = string
 }
 
+variable "fargate_on_demand_base" {
+  description = "Number of tasks always placed on on-demand FARGATE (set to 1+ for HA envs so Spot interruption never takes the service to zero)"
+  type        = number
+  default     = 0
+}
+
 variable "use_step_scaling" {
   description = "Use step scaling (CloudWatch alarms) instead of target tracking"
   type        = bool
