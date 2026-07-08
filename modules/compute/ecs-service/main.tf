@@ -110,13 +110,6 @@ resource "aws_ecs_task_definition" "main" {
         }
       ]
 
-      secrets = [
-        {
-          name      = "APP_SECRETS"
-          valueFrom = var.secret_arn
-        }
-      ]
-
       logConfiguration = {
         logDriver = "awslogs"
         options = {
